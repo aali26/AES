@@ -168,7 +168,7 @@ aeskey_t aeskey_init(unsigned short kappa) {
   out = (aeskey_t) malloc(sizeof(struct AESkey));
   out->keylen= kappa/8;
   out->Nk = kappa/32;
-  switch(out->Nk) {
+ /* switch(out->Nk) {
   case 4:
     out->Nr=10;
     out->wLen = 176; 
@@ -184,6 +184,24 @@ aeskey_t aeskey_init(unsigned short kappa) {
   default:
     return NULL;
   }
+*/
+// If statement faster than switch case
+if (out->Nk==4)
+{
+out->Nr=10;
+out->wLen = 176;
+}
+else if (out->Nk==6)
+{
+out->Nr=12;
+out->wLen = 208;
+}
+else if (out->Nk==8)
+{
+out->Nr=14;
+out->wLen = 240;
+}
+
   out->key = (unsigned char *) calloc(kappa/8, sizeof(unsigned char));
   return out;
 }
@@ -191,11 +209,11 @@ aeskey_t aeskey_init(unsigned short kappa) {
 
 int KeyExpansion(aeskey_t key, unsigned char w[]){
   int i;
-  unsigned char temp[4];
-  unsigned char tmp;
+ // unsigned char temp[4];
+ // unsigned char tmp;
   unsigned short Nk = key->Nk;
   unsigned short Nr= key->Nr;
-  memcpy(w, key->key, 4*Nk*sizeof(unsigned char));
+ /* memcpy(w, key->key, 4*Nk*sizeof(unsigned char));
   for (i=Nk; i<4*(Nr+1); i++){
     memcpy(temp, &w[4*(i-1)], 4);
     if ((i % Nk) == 0) {
@@ -216,7 +234,33 @@ int KeyExpansion(aeskey_t key, unsigned char w[]){
     w[4*i+2] = w[4*(i-Nk)+2] ^ temp[2];
     w[4*i+3] = w[4*(i-Nk)+3] ^ temp[3];
   }
-  return 0;
+  return 0;*/
+
+memcpy(w, key->key, 4 * Nk * sizeof(i));
+
+/* Create number of 4 byte words in key*/
+for (i = Nk; i < 4 * (Nr + 1); i++) {
+if ((i % Nk) == 0){
+w[4*i] = w[4*(i-Nk)] ^(sbox[w[4*(i-1)+1]]^ Rcon[i/Nk]);
+w[4*i+1] = w[4*(i-Nk)+1] ^sbox[w[4*(i-1)+2]];
+w[4*i+2] = w[4*(i-Nk)+2] ^sbox[w[4*(i-1)+3]];
+w[4*i+3] = w[4*(i-Nk)+3] ^sbox[w[4*(i-1)]];
+}
+else if ((Nk==8) && ((i%Nk)==4)){
+w[4*i]= w[4*(i-Nk)] ^sbox[w[4 * (i-1)]];
+w[4*i+1] = w[4*(i-Nk)+1] ^sbox[w[4*(i-1)+1]];
+w[4*i+2] = w[4*(i-Nk)+2] ^sbox[w[4*(i-1)+2]];
+w[4*i+3] = w[4*(i-Nk)+3] ^sbox[w[4*(i-1)+3]];
+}
+else {
+w[4*i] = w[4*(i-Nk)] ^w[4*(i-1)];
+w[4*i+1] = w[4*(i-Nk)+1] ^w[4*(i-1)+1];
+w[4*i+2] = w[4*(i-Nk)+2] ^w[4*(i-1)+2];
+w[4*i+3] = w[4*(i-Nk)+3] ^w[4*(i-1)+3];
+}
+
+}
+return 0;
 }
 
 static void SubBytes(unsigned char cipher[]) {
@@ -262,12 +306,52 @@ void AES_encrypt(unsigned char plain[], unsigned char cipher[], aeskey_t key) {
   unsigned char w[key->wLen];
   KeyExpansion(key, w);
   memcpy(cipher, plain, 16*sizeof(unsigned char));
-  for (i=0;i<16;i++) cipher[i] ^=w[i];
-  for (k=1; k<key->Nr; k++) {
+//  for (i=0;i<16;i++) cipher[i] ^=w[i];
+ cipher[0]^=w[0];
+cipher[1]^=w[1];
+cipher[2]^=w[2];
+cipher[3]^=w[3];
+cipher[4]^=w[4];
+cipher[5]^=w[5];
+cipher[6]^=w[6];
+cipher[7]^=w[7];
+cipher[8]^=w[8];
+cipher[9]^=w[9];
+cipher[10]^=w[10];
+cipher[11]^=w[11];
+cipher[12]^=w[12];
+cipher[13]^=w[13];
+cipher[14]^=w[14];
+cipher[15]^=w[15];
+
+
+ for (k=1; k<key->Nr; k++) {
     SubBytes(cipher);
     ShiftRows(cipher);
     MixColumns(cipher);
-    for (j=0;j<16;j++) cipher[j]^= w[16*k+j];
+   // for (j=0;j<16;j++) cipher[j]^= w[16*k+j];
+
+cipher[0]^=w[16*k+0];
+cipher[1]^=w[16*k+1];
+cipher[2]^=w[16*k+2];
+cipher[3]^=w[16*k+3];
+cipher[4]^=w[16*k+4];
+cipher[5]^=w[16*k+5];
+cipher[6]^=w[16*k+6];
+cipher[7]^=w[16*k+7];
+cipher[8]^=w[16*k+8];
+cipher[9]^=w[16*k+9];
+cipher[10]^=w[16*k+10];
+cipher[11]^=w[16*k+11];
+cipher[12]^=w[16*k+12];
+cipher[13]^=w[16*k+13];
+cipher[14]^=w[16*k+14];
+cipher[15]^=w[16*k+15];
+
+
+
+
+
   }
   SubBytes(cipher);
   ShiftRows(cipher);
@@ -304,9 +388,9 @@ static void InvShiftRows(unsigned char plain[]) {
 static unsigned char f256times2(unsigned char a) {
   return ((a<<1) ^ (0x1B & (unsigned char)((signed char) a >> 7)));
 }
-
+/*Change from case to IF statement*/
 static unsigned char f256mul(unsigned char b, unsigned char a) {
-  switch(b) {
+ /* switch(b) {
   case 0x09:
     return f256times2(f256times2(f256times2(a))) ^ a;
   case 0x0b:
@@ -315,8 +399,21 @@ static unsigned char f256mul(unsigned char b, unsigned char a) {
     return f256times2(f256times2(a^f256times2(a))) ^a;
   case 0x0e:
     return f256times2(a^f256times2(a^f256times2(a)));
-  }
-  return '\0';
+  }*/
+if (b==0x09){
+return f256times2(f256times2(f256times2(a))) ^a;
+}
+else if (b==0x0b){
+return f256times2(a^f256times2(f256times2(a)))^a;
+}
+else if (b==0x0d){
+return f256times2(f256times2(a^f256times2(a)))^a;
+}
+else if(b==0x0e){
+return f256times2(a^f256times2(a^f256times2(a)));
+}
+
+else return '\0';
 }
 
 
