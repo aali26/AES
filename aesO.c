@@ -302,7 +302,7 @@ static void MixColumns(unsigned char cipher[]) {
 }
 
 void AES_encrypt(unsigned char plain[], unsigned char cipher[], aeskey_t key) {
-  int i,j,k;
+  int i,k;
   unsigned char w[key->wLen];
   KeyExpansion(key, w);
   memcpy(cipher, plain, 16*sizeof(unsigned char));
